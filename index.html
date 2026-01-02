@@ -18,9 +18,16 @@
     transition:all 1.5s cubic-bezier(.68,-.55,.27,1.55);
   }
   #message.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
+
+  /* === 渐变类 === */
+  .name-g1{background:linear-gradient(45deg,#ff4da6,#ff0080,#ff4da6);}
+  .name-g2{background:linear-gradient(45deg,#4df8ff,#00ccff,#4df8ff);}
+  .name-g3{background:linear-gradient(45deg,#ffeb3b,#ffc400,#ffeb3b);}
+  .name-g4{background:linear-gradient(45deg,#9c27b0,#d500f9,#9c27b0);}
+  .name-g5{background:linear-gradient(45deg,#00ff88,#00bcd4,#00ff88);}
+
   #name{
-    font-size:6rem;background:linear-gradient(45deg,#ff4da6,#ff0080,#ff4da6);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-size:6rem;-webkit-background-clip:text;background-clip:text;color:transparent;
     text-shadow:0 0 40px rgba(255,77,166,.8);letter-spacing:5px;
     animation:glow 3s ease-in-out infinite alternate;
   }
@@ -56,7 +63,7 @@
 </head>
 <body>
 
-<div id="message"><h1 id="name">李院香，元旦快乐！</h1></div>
+<div id="message"><h1 id="name" class="name-g1">李院香，元旦快乐！</h1></div>
 <div class="countdown" id="countdown"></div>
 <canvas id="fireworkCanvas"></canvas>
 
@@ -104,6 +111,16 @@ function createFloatText(){
 /* 初始先喷几句，再持续补充 */
 for(let i=0;i<10;i++) setTimeout(createFloatText,i*600);
 setInterval(createFloatText,2500);
+
+/* ===== 主文字颜色切换 ===== */
+const gradients = ['name-g1','name-g2','name-g3','name-g4','name-g5'];
+let gIndex = 0;
+const nameEl = document.getElementById('name');
+setInterval(()=>{
+  nameEl.classList.remove(...gradients);
+  gIndex = (gIndex+1)%gradients.length;
+  nameEl.classList.add(gradients[gIndex]);
+},3000);
 
 /* ===== 下方保留你的烟花与倒计时逻辑 ===== */
 const canvas = document.getElementById('fireworkCanvas');
