@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 关键：适配手机屏幕 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title></title>
     <style>
         * {
@@ -17,77 +18,80 @@
             font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
             width: 100vw;
             height: 100vh;
+            /* 禁止弹性滚动 */
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
         }
         
         .popup {
             position: absolute;
-            padding: 6px 14px;
+            padding: 4px 10px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             color: #333;
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
             border: 1px solid rgba(255,255,255,0.2);
             user-select: none;
+            -webkit-user-select: none;
             z-index: 1000;
             opacity: 0;
             transform: scale(0);
             transition: transform 0.3s ease-out, opacity 0.3s ease-out;
             white-space: nowrap;
-            /* 滑动动画 */
             animation: float 3s ease-in-out infinite;
+            /* 禁止长按弹出菜单 */
+            -webkit-touch-callout: none;
         }
         
-        /* 弹出动画 */
         .popup.show {
             opacity: 1;
             transform: scale(1);
         }
         
-        /* 悬浮滑动动画 */
         @keyframes float {
-            0%, 100% {
-                transform: translate(0, 0) scale(1);
-            }
-            25% {
-                transform: translate(5px, -8px) scale(1);
-            }
-            50% {
-                transform: translate(-3px, -12px) scale(1);
-            }
-            75% {
-                transform: translate(8px, -5px) scale(1);
-            }
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(5px, -8px) scale(1); }
+            50% { transform: translate(-3px, -12px) scale(1); }
+            75% { transform: translate(8px, -5px) scale(1); }
         }
         
-        .popup:hover {
+        .popup:hover, .popup:active {
             z-index: 2000;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            animation-play-state: paused;  /* 悬停时暂停滑动 */
+            animation-play-state: paused;
+            transform: scale(1.1);
         }
         
-        /* 关闭按钮 */
         .popup::after {
             content: '×';
             position: absolute;
             top: 2px;
             right: 6px;
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
             opacity: 0;
             transition: opacity 0.2s;
         }
         
-        .popup:hover::after {
+        .popup:hover::after, .popup:active::after {
             opacity: 1;
+        }
+        
+        /* 移动端适配 */
+        @media screen and (max-width: 768px) {
+            .popup {
+                font-size: 11px;
+                padding: 3px 8px;
+            }
         }
     </style>
 </head>
 <body>
     <script>
         const texts = [
-            "好好吃饭", "别熬夜", "多喝水哦~", 
+            "我想你了", "好好吃饭", "别熬夜", "多喝水哦~", 
             "好好爱自己", "保持好心情", "顺顺利利", "天冷了多穿衣服"
         ];
         
@@ -97,7 +101,6 @@
             '#90EE90', '#FFD700', '#FFA07A', '#E6E6FA'
         ];
         
-        // 获取爱心坐标
         function getHeartPoints(n, width, height) {
             const points = [];
             for (let i = 0; i < n; i++) {
@@ -105,19 +108,19 @@
                 const x = 16 * Math.pow(Math.sin(t), 3);
                 const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
                 
-                const scale = Math.min(width, height) / 32;
+                // 移动端缩小爱心尺寸
+                const scale = Math.min(width, height) / (width < 768 ? 28 : 32);
                 const px = Math.floor(x * scale + width / 2);
                 const py = Math.floor(y * scale + height / 2);
                 
                 points.push({
-                    x: Math.max(60, Math.min(px, width - 140)),
-                    y: Math.max(40, Math.min(py, height - 60))
+                    x: Math.max(50, Math.min(px, width - 120)),
+                    y: Math.max(40, Math.min(py, height - 50))
                 });
             }
             return points;
         }
         
-        // 创建弹窗
         function createPopup(x, y, text, color) {
             const div = document.createElement('div');
             div.className = 'popup';
@@ -126,11 +129,17 @@
             div.style.backgroundColor = color || colors[Math.floor(Math.random() * colors.length)];
             div.textContent = text || texts[Math.floor(Math.random() * texts.length)];
             
-            // 每个弹窗随机延迟动画，产生错落感
             div.style.animationDelay = Math.random() * 2 + 's';
             div.style.animationDuration = (2.5 + Math.random() * 2) + 's';
             
-            // 点击关闭
+            // 移动端触摸关闭
+            div.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                this.style.transform = 'scale(0)';
+                this.style.opacity = '0';
+                setTimeout(() => this.remove(), 300);
+            });
+            
             div.onclick = function(e) {
                 e.stopPropagation();
                 this.style.transform = 'scale(0)';
@@ -140,7 +149,6 @@
             
             document.body.appendChild(div);
             
-            // 强制重绘后添加动画类
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
                     div.classList.add('show');
@@ -152,13 +160,18 @@
         
         const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         
-        // 主程序
         async function run() {
+            // 获取实际可视区域（解决移动端地址栏问题）
             const width = window.innerWidth;
             const height = window.innerHeight;
             
-            // ========== 第一阶段：爱心形状 ==========
-            const heartPoints = getHeartPoints(100, width, height);
+            // 移动端减少弹窗数量
+            const isMobile = width < 768;
+            const heartCount = isMobile ? 60 : 100;
+            const randomCount = Math.floor((width * height) / (isMobile ? 10000 : 8000));
+            
+            // 第一阶段：爱心形状
+            const heartPoints = getHeartPoints(heartCount, width, height);
             
             for (let i = 0; i < heartPoints.length; i++) {
                 const point = heartPoints[i];
@@ -168,34 +181,41 @@
                     texts[i % texts.length],
                     colors[i % colors.length]
                 );
-                await sleep(30);
+                await sleep(isMobile ? 40 : 30);
             }
             
             await sleep(1500);
             
-            // ========== 第二阶段：随机散布（带滑动） ==========
-            const randomCount = Math.floor((width * height) / 8000);
-            
+            // 第二阶段：随机散布
             for (let i = 0; i < randomCount; i++) {
-                const x = Math.floor(Math.random() * (width - 140)) + 20;
-                const y = Math.floor(Math.random() * (height - 60)) + 20;
+                const x = Math.floor(Math.random() * (width - 120)) + 20;
+                const y = Math.floor(Math.random() * (height - 50)) + 20;
                 createPopup(x, y);
-                await sleep(40);
+                await sleep(isMobile ? 50 : 40);
             }
         }
         
-        // 空格键关闭所有
+        // 空格/点击关闭所有
         document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                const popups = document.querySelectorAll('.popup');
-                popups.forEach((p, index) => {
-                    setTimeout(() => {
-                        p.style.transform = 'scale(0)';
-                        p.style.opacity = '0';
-                        setTimeout(() => p.remove(), 300);
-                    }, index * 10);
-                });
-            }
+            if (e.code === 'Space') closeAll();
+        });
+        
+        document.addEventListener('dblclick', closeAll);
+        
+        function closeAll() {
+            const popups = document.querySelectorAll('.popup');
+            popups.forEach((p, index) => {
+                setTimeout(() => {
+                    p.style.transform = 'scale(0)';
+                    p.style.opacity = '0';
+                    setTimeout(() => p.remove(), 300);
+                }, index * 10);
+            });
+        }
+        
+        // 屏幕旋转时刷新
+        window.addEventListener('resize', () => {
+            location.reload();
         });
         
         run();
