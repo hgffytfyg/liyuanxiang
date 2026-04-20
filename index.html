@@ -1,257 +1,204 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>元旦快乐！</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{
-    background:linear-gradient(135deg,#000814 0%,#0c1a2d 50%,#1a1a2e 100%);
-    overflow:hidden;font-family:'Microsoft YaHei',sans-serif;
-    color:white;text-align:center;height:100vh;
-  }
-  #message{
-    position:absolute;top:50%;left:50%;
-    transform:translate(-50%,-50%) scale(0);
-    width:90%;max-width:1200px;z-index:20;opacity:0;
-    transition:all 1.5s cubic-bezier(.68,-.55,.27,1.55);
-  }
-  #message.show{transform:translate(-50%,-50%) scale(1);opacity:1;}
-
-  /* === 渐变类 === */
-  .name-g1{background:linear-gradient(45deg,#ff4da6,#ff0080,#ff4da6);}
-  .name-g2{background:linear-gradient(45deg,#4df8ff,#00ccff,#4df8ff);}
-  .name-g3{background:linear-gradient(45deg,#ffeb3b,#ffc400,#ffeb3b);}
-  .name-g4{background:linear-gradient(45deg,#9c27b0,#d500f9,#9c27b0);}
-  .name-g5{background:linear-gradient(45deg,#00ff88,#00bcd4,#00ff88);}
-
-  #name{
-    font-size:6rem;-webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 0 40px rgba(255,77,166,.8);letter-spacing:5px;
-    animation:glow 3s ease-in-out infinite alternate;
-  }
-  @keyframes glow{0%{filter:brightness(1) saturate(100%)}100%{filter:brightness(1.4) saturate(140%)}}
-
-  #fireworkCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;}
-  .countdown{position:absolute;bottom:15%;left:50%;transform:translateX(-50%);font-size:5rem;font-weight:bold;text-shadow:0 0 20px rgba(255,255,255,.8);z-index:10;}
-
-  /* ===== 多行大字悬浮 ===== */
-  .float-text{
-    position:absolute;white-space:nowrap;
-    font-size:2.2rem;font-weight:bold;
-    background:linear-gradient(45deg,#ff4da6,#ffeb3b,#4df8ff);
-    -webkit-background-clip:text;background-clip:text;
-    color:transparent;
-    text-shadow:0 0 15px rgba(255,255,255,.4);
-    pointer-events:none;z-index:5;
-    animation:floatX 18s linear infinite;
-  }
-  @keyframes floatX{
-    0%{transform:translateX(-100vw);opacity:0}
-    10%{opacity:1}
-    90%{opacity:1}
-    100%{transform:translateX(100vw);opacity:0}
-  }
-
-  @media(max-width:768px){
-    #name{font-size:4rem;}
-    .countdown{font-size:4rem;bottom:10%;}
-    .float-text{font-size:1.8rem;}
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0d1117;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        .popup {
+            position: absolute;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            user-select: none;
+            z-index: 1000;
+            opacity: 0;
+            transform: scale(0);
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            white-space: nowrap;
+            /* 滑动动画 */
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* 弹出动画 */
+        .popup.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        /* 悬浮滑动动画 */
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+            }
+            25% {
+                transform: translate(5px, -8px) scale(1);
+            }
+            50% {
+                transform: translate(-3px, -12px) scale(1);
+            }
+            75% {
+                transform: translate(8px, -5px) scale(1);
+            }
+        }
+        
+        .popup:hover {
+            z-index: 2000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            animation-play-state: paused;  /* 悬停时暂停滑动 */
+        }
+        
+        /* 关闭按钮 */
+        .popup::after {
+            content: '×';
+            position: absolute;
+            top: 2px;
+            right: 6px;
+            font-size: 12px;
+            color: #666;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .popup:hover::after {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-
-<div id="message"><h1 id="name" class="name-g1">李院香，元旦快乐！</h1></div>
-<div class="countdown" id="countdown"></div>
-<canvas id="fireworkCanvas"></canvas>
-
-<script>
-/* ===== 祝福语池 ===== */
-const blessings = [
-  '天天开心　暴富暴美　',
-  '余额翻倍　颜值爆表　',
-  '快乐加满　钱包加鼓　',
-  '烦恼清零　好运爆仓　',
-  '桃花朵朵　钞票厚厚　',
-  '吃不胖　睡得香　赚得满　',
-  '少女感满格　银行卡满额　',
-  '一路开挂　秒变富婆　',
-  '卡路里为零　人民币翻倍　',
-  '心动常有　余额常多　',
-  '颜值在线　财富上线　',
-  '开心暴击　暴富加速　',
-  '快乐超标　肥肉归零　',
-  '好运连连　收入翻番　',
-  '微笑免费　暴富加倍　',
-  '青春常驻　余额暴涨　',
-  '肤白貌美　腰缠万贯　',
-  '快乐续航　暴富加速　',
-  '横扫沮丧　喜迎暴富　'
-];
-
-/* ===== 持续生成多行大字 ===== */
-function createFloatText(){
-  const div = document.createElement('div');
-  div.className = 'float-text';
-  div.textContent = blessings[Math.floor(Math.random()*blessings.length)];
-  // 随机高度（避开中间主文字区）
-  let top;
-  do{ top = Math.random()*100; }
-  while(top>40 && top<70);
-  div.style.top = top + '%';
-  div.style.animationDelay = Math.random()*5 + 's';
-  document.body.appendChild(div);
-
-  // 动画结束后自清理
-  div.addEventListener('animationend',()=>div.remove());
-}
-
-/* 初始先喷几句，再持续补充 */
-for(let i=0;i<10;i++) setTimeout(createFloatText,i*600);
-setInterval(createFloatText,2500);
-
-/* ===== 主文字颜色切换 ===== */
-const gradients = ['name-g1','name-g2','name-g3','name-g4','name-g5'];
-let gIndex = 0;
-const nameEl = document.getElementById('name');
-setInterval(()=>{
-  nameEl.classList.remove(...gradients);
-  gIndex = (gIndex+1)%gradients.length;
-  nameEl.classList.add(gradients[gIndex]);
-},3000);
-
-/* ===== 下方保留你的烟花与倒计时逻辑 ===== */
-const canvas = document.getElementById('fireworkCanvas');
-const ctx = canvas.getContext('2d');
-const message = document.getElementById('message');
-const countdown = document.getElementById('countdown');
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-const particles = [], colors = [
-  '#ff4da6','#4df8ff','#ffeb3b','#9c27b0','#00ff88',
-  '#ff9800','#e91e63','#00bcd4','#8bc34a','#ff5722'
-];
-let fireworksStarted = false;
-const maxFireworks = 12;
-
-class Particle{
-  constructor(x,y,color,isTrail=false,isSpecial=false){
-    this.x=x;this.y=y;this.color=color;
-    this.radius = isTrail ? Math.random()*2+0.5 : Math.random()*4+1;
-    this.speedX = Math.random()*8-4;
-    this.speedY = isTrail ? Math.random()*-12-3 : Math.random()*-10-5;
-    this.life = isTrail?100:(isSpecial?150:120);
-    this.gravity = isTrail?0.025:0.04;
-    this.alpha=1;this.decay=Math.random()*0.025+0.01;
-    this.trail=isTrail;this.special=isSpecial;
-  }
-  update(){
-    this.speedY+=this.gravity;
-    this.x+=this.speedX;this.y+=this.speedY;
-    this.life--;this.alpha-=this.decay;
-    this.radius*=this.trail?0.94:0.97;
-  }
-  draw(){
-    ctx.save();ctx.globalAlpha=this.alpha;
-    ctx.beginPath();
-    if(this.trail){
-      const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.radius*3);
-      g.addColorStop(0,this.color);g.addColorStop(1,'transparent');
-      ctx.fillStyle=g;
-    }else ctx.fillStyle=this.color;
-    ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);ctx.fill();
-    // 光晕
-    if(!this.trail){
-      for(let i=1;i<=3;i++){
-        ctx.beginPath();ctx.arc(this.x,this.y,this.radius*(i+1),0,Math.PI*2);
-        ctx.fillStyle=this.color;ctx.globalAlpha=this.alpha*(0.4/i);ctx.fill();
-      }
-    }
-    ctx.restore();
-  }
-}
-
-function createFirework(x,y,isSpecial=false){
-  const count=isSpecial?400:250,color=colors[Math.floor(Math.random()*colors.length)];
-  for(let i=0;i<30;i++) particles.push(new Particle(x,y,color,true,isSpecial));
-  for(let i=0;i<count;i++){
-    const angle=Math.random()*Math.PI*2,speed=Math.random()*12+3;
-    const p=new Particle(x,y,color,false,isSpecial);
-    p.speedX=Math.cos(angle)*speed;p.speedY=Math.sin(angle)*speed;
-    p.life=isSpecial?180:140;particles.push(p);
-  }
-  if(isSpecial){
-    setTimeout(()=>createHeart(x,y),200);
-    setTimeout(()=>createStar(x,y),400);
-  }
-}
-
-function createHeart(x,y){
-  const heartColor='#ff4da6',pts=[];
-  for(let t=0;t<Math.PI*2;t+=0.08){
-    pts.push({x:16*Math.pow(Math.sin(t),3),y:-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t))});
-  }
-  pts.forEach(pt=>{
-    for(let i=0;i<5;i++){
-      const p=new Particle(x+pt.x*2,y+pt.y*2,heartColor,false,true);
-      p.speedX=pt.x*0.15+Math.random()*3-1.5;p.speedY=pt.y*0.15+Math.random()*3-1.5;p.life=200;
-      particles.push(p);
-    }
-  });
-}
-
-function createStar(x,y){
-  const starColor='#ffeb3b',pts=5,out=30,inner=15;
-  for(let i=0;i<pts*2;i++){
-    const angle=(i*Math.PI)/pts,r=i%2===0?out:inner;
-    const px=Math.cos(angle)*r,py=Math.sin(angle)*r;
-    for(let j=0;j<3;j++){
-      const p=new Particle(x+px,y+py,starColor,false,true);
-      p.speedX=px*0.1+Math.random()*2-1;p.speedY=py*0.1+Math.random()*2-1;p.life=180;
-      particles.push(p);
-    }
-  }
-}
-
-function animate(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  const g=ctx.createRadialGradient(canvas.width/2,canvas.height/2,0,canvas.width/2,canvas.height/2,canvas.width);
-  g.addColorStop(0,'rgba(12,26,45,.1)');g.addColorStop(1,'rgba(26,26,46,.6)');
-  ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);
-  for(let i=particles.length-1;i>=0;i--){
-    particles[i].update();particles[i].draw();
-    if(particles[i].life<=0||particles[i].alpha<=0) particles.splice(i,1);
-  }
-  requestAnimationFrame(animate);
-}
-
-function startShow(){
-  if(fireworksStarted) return; fireworksStarted=true;
-  let count=3; countdown.style.display='block';
-  const cd=setInterval(()=>{
-    countdown.textContent=count;
-    countdown.style.transform=`translateX(-50%) scale(${1+(4-count)*0.3})`;
-    countdown.style.opacity=1;
-    setTimeout(()=>{countdown.style.transform='translateX(-50%) scale(1)';countdown.style.opacity=0.9;},500);
-    count--;
-    if(count<0){clearInterval(cd);countdown.style.display='none';launch();}
-  },1000);
-}
-
-function launch(){
-  setTimeout(()=>createFirework(canvas.width/2,canvas.height/2,true),300);
-  const pos=[{x:.15,y:.25},{x:.85,y:.25},{x:.25,y:.75},{x:.75,y:.75},{x:.5,y:.2},{x:.5,y:.8}];
-  pos.forEach((p,i)=>setTimeout(()=>createFirework(canvas.width*p.x,canvas.height*p.y),600+i*200));
-  for(let i=7;i<maxFireworks;i++) setTimeout(()=>{const x=Math.random()*canvas.width,y=Math.random()*canvas.height*.5+canvas.height*.2;createFirework(x,y,i%3===0);},1800+i*200);
-  setTimeout(()=>{message.classList.add('show');setInterval(()=>{if(particles.length<1500) createFirework(Math.random()*canvas.width,Math.random()*canvas.height*.6+canvas.height*.2,Math.random()>0.7);},1200);},4000);
-}
-
-// 初始化
-animate(); startShow();
-</script>
+    <script>
+        const texts = [
+            "好好吃饭", "别熬夜", "多喝水哦~", 
+            "好好爱自己", "保持好心情", "顺顺利利", "天冷了多穿衣服"
+        ];
+        
+        const colors = [
+            '#FFB6C1', '#87CEEB', '#98FB98', '#FFFACD', 
+            '#DDA0DD', '#F0E68C', '#87CEFA', '#FF69B4', 
+            '#90EE90', '#FFD700', '#FFA07A', '#E6E6FA'
+        ];
+        
+        // 获取爱心坐标
+        function getHeartPoints(n, width, height) {
+            const points = [];
+            for (let i = 0; i < n; i++) {
+                const t = (i / n) * 2 * Math.PI;
+                const x = 16 * Math.pow(Math.sin(t), 3);
+                const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                
+                const scale = Math.min(width, height) / 32;
+                const px = Math.floor(x * scale + width / 2);
+                const py = Math.floor(y * scale + height / 2);
+                
+                points.push({
+                    x: Math.max(60, Math.min(px, width - 140)),
+                    y: Math.max(40, Math.min(py, height - 60))
+                });
+            }
+            return points;
+        }
+        
+        // 创建弹窗
+        function createPopup(x, y, text, color) {
+            const div = document.createElement('div');
+            div.className = 'popup';
+            div.style.left = x + 'px';
+            div.style.top = y + 'px';
+            div.style.backgroundColor = color || colors[Math.floor(Math.random() * colors.length)];
+            div.textContent = text || texts[Math.floor(Math.random() * texts.length)];
+            
+            // 每个弹窗随机延迟动画，产生错落感
+            div.style.animationDelay = Math.random() * 2 + 's';
+            div.style.animationDuration = (2.5 + Math.random() * 2) + 's';
+            
+            // 点击关闭
+            div.onclick = function(e) {
+                e.stopPropagation();
+                this.style.transform = 'scale(0)';
+                this.style.opacity = '0';
+                setTimeout(() => this.remove(), 300);
+            };
+            
+            document.body.appendChild(div);
+            
+            // 强制重绘后添加动画类
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    div.classList.add('show');
+                });
+            });
+            
+            return div;
+        }
+        
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        // 主程序
+        async function run() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // ========== 第一阶段：爱心形状 ==========
+            const heartPoints = getHeartPoints(100, width, height);
+            
+            for (let i = 0; i < heartPoints.length; i++) {
+                const point = heartPoints[i];
+                createPopup(
+                    point.x, 
+                    point.y, 
+                    texts[i % texts.length],
+                    colors[i % colors.length]
+                );
+                await sleep(30);
+            }
+            
+            await sleep(1500);
+            
+            // ========== 第二阶段：随机散布（带滑动） ==========
+            const randomCount = Math.floor((width * height) / 8000);
+            
+            for (let i = 0; i < randomCount; i++) {
+                const x = Math.floor(Math.random() * (width - 140)) + 20;
+                const y = Math.floor(Math.random() * (height - 60)) + 20;
+                createPopup(x, y);
+                await sleep(40);
+            }
+        }
+        
+        // 空格键关闭所有
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                const popups = document.querySelectorAll('.popup');
+                popups.forEach((p, index) => {
+                    setTimeout(() => {
+                        p.style.transform = 'scale(0)';
+                        p.style.opacity = '0';
+                        setTimeout(() => p.remove(), 300);
+                    }, index * 10);
+                });
+            }
+        });
+        
+        run();
+    </script>
 </body>
 </html>
