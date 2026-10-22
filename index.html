@@ -614,6 +614,7 @@ document.addEventListener("click", (e) => {
 
 /* 成功！ */
 document.getElementById("yesBtn").addEventListener("click", () => {
+  noBtn.style.display = "none"; // 逃跑按钮可能已挪到 body 下，单独隐藏
   document.getElementById("askView").style.display = "none";
   document.getElementById("successView").style.display = "block";
   // 烟花 + 满屏爱心
